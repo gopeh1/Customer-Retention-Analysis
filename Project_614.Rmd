@@ -1,0 +1,540 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+#For performing the EDA, we will have to install and load the following packages:
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(DataExplorer)
+library(pROC)
+library(glmnet)
+library(aqp)
+library(soilDB)
+# To access correlation matrix plot
+library("PerformanceAnalytics")
+```
+
+# Upload the dataset
+```{r}
+CustomerRetention
+
+```
+# Answer 1.1
+# Data preparation and Exploratory Data Analysis
+# data frame has 6999 records and 20 variables, characteristics provided by the dim function
+# Exploratory Data Analysis or EDA is a statistical approach or technique for analyzing data sets in order to summarize their important and main characteristics generally by using some visual aids. The EDA approach can be used to gather knowledge about the following aspects of data:
+
+# Main characteristics or features of the data.
+# The variables and their relationships.
+# Finding out the important variables that can be used in our problem.
+
+# Below is the performance of the EDA under two broad classifications:
+#(1) Descriptive Statistics, which includes mean, median, mode, inter-quartile range, and so on.
+#(2) Graphical Methods, which includes histogram, density estimation, box plots, and so on.
+```{r}
+dim(CustomerRetention)
+```
+
+#Displays the type and a preview of all columns as a row so that it's very easy to take in accoding to type of variables
+```{r}
+glimpse(CustomerRetention)
+
+```
+
+```{r}
+#BasicSummary(CustomerRetention)
+typeof(CustomerRetention)
+```
+
+#Data Inspection for EDA in R to know mean median min, max for all the variables that is comes in description data exploration 
+```{r}
+summary(CustomerRetention)
+```
+
+#Note that there is significant correlation of TotalCharges with Tenure and MonthlyCharges. If collinearity is an #issue for the method I am using then I will not use MonthlyCharges
+```{r}
+# I will create a subset with the numeric variables I want to explore correlations for
+CustomerRetention.numeric <- CustomerRetention %>%
+  select(Tenure,MonthlyCharges,TotalCharges)
+chart.Correlation(CustomerRetention.numeric , histogram=TRUE, pch=19)
+```
+# Get a Full Data Summary Report
+#Basic statistics, missing data, distribution, correlation, PCA.
+
+#The target variable in our dataset is the status column so it is better to start with exploring this column. We can use a Bar to visualize the distribution.
+
+
+#Graphical Method in EDA 
+
+#Since we have already checked our data for missing values, blatant errors, and typos, we can now examine our data graphically in order to perform EDA. We will see the graphical representation under the following categories: 
+
+#since most of the variables are factor so here using the bar graph 
+# Current customer have more intwrest in monthly charges less than 25 that is more than 1000 customer however a slightly increasing and decreasing trend were seen throughout the all monthly charge plan 
+# left customer statistics shows 75 monthly plan were most popuar while between 25 to 50 shows least intrestin plan 
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_histogram(mapping = aes(x = MonthlyCharges))+facet_wrap(~Status)
+```
+# Current customer have more increasing trend of tenure however
+# left customer have decreasing trend of tenure
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_histogram(mapping = aes(x = Tenure))+facet_wrap(~Status)
+```
+
+#visulization for total charges
+#for trend totalcharges, current number of customer are more interested below 2500 monthly charges , the number of customers decline according to total charges were increasing
+# Same trend were seen in the left customer data below 2500 were more customer were interested however as chrges increases least customer were found 
+```{r}
+ ggplot(data = CustomerRetention) + 
+  geom_histogram(mapping = aes(x = TotalCharges))+facet_wrap(~Status)
+```
+
+# Current customer most of them are not interested in being Dependents and around 1800 are yes to have dependents 
+# left customer figure says just above 1500 very no Dependents and very less were interested in Dependents, mostly they prefered No
+# over all it says in present and past both customer were not interested in being dependets in using services 
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = Dependents))+facet_wrap(~Status)
+```
+# current customer have slightly more male customer than female and number of present much more than left cutomer  
+# how ever left customer have same statistcs of male and female  that is around 1000
+
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = Gender))+facet_wrap(~Status)
+```
+
+# Current customer majority of them are partner and around 2500 are not partner and they are independent 
+# Customer who have left the service , most of them were not interested in being partner and just above the 500 were interested in partner services 
+# over all can say that current customer are more having partner and even nuber of xutoemrs are more than before 
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = Partner))+facet_wrap(~Status)
+```
+
+
+# Present customer mostly interested in month-to-month contract services menas they prefer to pay monthly then afer they prefer two year contract paln however one year contract plan are leat popular among current customer 
+# Left customer figure who had month-to -month plan eually same as two year plan in current customer 
+# very less left customers were interested in tow year contact plan how ever one yaer paln was sloght abve than the two year plan
+
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = Contract))+facet_wrap(~Status)
+```
+
+
+# Answer 1.2
+#Report your detailed observations of the sensitivity of customer status to other variables.
+# ploting bar graph for customer status on the internet services
+#According to current customer status DSl internet services is more popular  however,left customer were more interested in Fiber optic
+# those who left Very least customer were not intersted in internet service 
+# current customers are more that they are not using internetservices
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = InternetService))+facet_wrap(~Status)
+```
+#Current customer are more involved in DSl and fiber optic Services have been more trending current customer that is arround 2000 and more than 1800 accordingly and who all not using internetservice are less than 1500
+# Left customer were more interesd in Fiber optic , then DSL and very few were not using Internt
+# and number of current customer are more 
+
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = InternetService))+facet_wrap(~Status)
+```
+# Present customer are most of them not interested in having onlinebackup , and alightly less are not interested in onlinebackup, and about 1500  have no internet os they can not have onlinebackup
+# left cuatomer most of them were not usinf online backup , and least of them were not usinf internet serviecs  and yes more than 500 were ahving onlinebackup 
+
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = OnlineBackup))+facet_wrap(~Status)
+```
+
+
+
+
+# Most current customer have no MultipleLines
+# more than 2000 having MultipleLines who cuurently part of service
+# less than 200 those had no phone services 
+# left customer equal numer of stats says they were yes and no to MultipleLines services 
+# least of them were not having phone services 
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = MultipleLines))+facet_wrap(~Status)
+```
+# Equal number of current customer have no DeviceProtection service and aound 1400 have no internet service 
+# and according to left customer data most of then had not DeviceProtection service and very few were not using internt
+
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = DeviceProtection))+facet_wrap(~Status)
+```
+
+# According to graph bank transfer , credit card , electronic check, mailed check figure more than 1000 are same for current customer but still mailed check is slightly more popular 
+# left customer more interested in electronic check however they shoed least involvement in mailed check 
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = Status))+facet_wrap(~PaymentMethod)
+```
+# Most of the current customer have PaperlessBilling preferences about 3000 how ever less than 2500 are not interested in PaperlessBilling
+# how ever who left the majority of them were having PaperlessBilling about 1500 and around 500 were not interested in PaperlessBilling
+
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = PaperlessBilling))+facet_wrap(~Status)
+```
+
+# StreamingMovies are pupular in current customer , how ever mostly equaly are not interested in StreamingMovies
+# in present customer 1400 customers are not ising internet services  
+#left customer data says most of them were not interested in StreamingMovies, very few had no internet services 
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = StreamingMovies))+facet_wrap(~Status)
+```
+# Current customer most of them are not interested in TechSupport , leasr of them not having internet services and yes around 1800 are interested in TechSupport
+#left customer were also most of them were not interested in TechSupport, very least of them were not having internet services  and yes more than 300 were having tech support services 
+
+```{r}
+ggplot(data = CustomerRetention) + 
+  geom_bar(mapping = aes(x = TechSupport))+facet_wrap(~Status)
+```
+
+# Answer 1.3
+```{r}
+set.seed(2)
+train <- sample(6999,6000)
+CustomerRetention_Training <- CustomerRetention[train,]
+CustomerRetention_Testing <- CustomerRetention[-train,]
+str(CustomerRetention_Training)
+str(CustomerRetention_Testing)
+```
+
+
+```{r}
+CustomerRetention_Training <- CustomerRetention_Training %>% mutate(Status_new= as.factor(Status))
+str(CustomerRetention_Training)
+```
+
+#Answer 2.1
+# After analysis of the all models with different combination of vatiables i found status_new and Tenure is the best model As i see in Roc plot AUC (Area under the curve) is more close to TOP LEFT CORNER that is 0.738 .
+# First notice that this coefficient is statistically significant (associated with a p-value < 0.05), so our model suggests that
+# Coefficient for Tenure variable is -0.03869215 and p- value is  also -25.3873962 < 0.05 , Tenure does not influence the customer behaviour , that thery are leaving the serivices 
+
+# Same ROC plot with 0.738 AUC i am getting with combination of variables status_new and monthlycharge
+# Coefficient of monthlycharge variables is 0.01525974 that is positive number and p- value is 14.49112 > 0.05 so that monthlycharge is affecting the customer behaviour positively , As the monthlycharge increasing the customer behaviour might be tend to decrease the interest in the taking services anymore. same trend i can see in the data visulization part that as monthly charge increasing that leading to lose the nuber of status.
+
+# seniourcitizen coefficient is 0.8708419 that indicate seniourcitizen influencing the customer behaviour in order to losing the status of customer 
+# For the TotalCharges variable with status_new coefficent is -0.0002385792 that pretend that it may affect the customer status of losing the service
+
+# using status and partner variable the coefficent of gender is -0.6884348 and it is not statistically significant in the model so it will decrease the probability for losing the customer , that this is not leading the customer behaviour to lose the services
+
+# using status and gender combination of variables the coeffcient is -0.029837 this is also not affecting the customer status to lose the service.
+
+# using status and internetservice combination of shows statiscially significant model in the model fibre optic have positive coeffcient and no internet service have negative coefficient that show option no is not affecting the cuatomer status however who have fibre optic service may influenc the customer behaviour 
+```{r}
+# Store the Logistic Regression model in LogisticModel
+LogisticModel.training <- glm(Status_new ~ Tenure , data = CustomerRetention_Training, family = binomial)
+summary(LogisticModel.training)
+# To access only the coefficients, error estiamtes, z values and the p-values
+summary(LogisticModel.training)$coef
+```
+
+
+```{r}
+# Accessing just the coefficients from the model object
+coef(LogisticModel.training)
+```
+
+```{r}
+# To access just the p-values of the coefficients
+summary(LogisticModel.training)$coef[,3]
+```
+
+# Making the predictions
+```{r}
+Predictions_Probabilities <- predict(LogisticModel.training, type = "response", newdata = CustomerRetention_Testing)
+str(Predictions_Probabilities)
+```
+
+
+```{r}
+# Lets inspect a few probabilities
+Predictions_Probabilities[1:20]
+```
+
+
+```{r}
+# Create a vector of prediction classes based on the value of the prediction probability
+Prediction_Classes <- ifelse(Predictions_Probabilities > 0.5, "Left", "Current")
+table(Prediction_Classes, CustomerRetention_Testing$Status_new)
+```
+
+# Compute the prediction accuracy on the training data(in percent)
+```{r}
+(726+0)/(726+272+1+0)*100
+```
+```{r}
+plot(LogisticModel.training)
+```
+#Plot the ROC curve
+
+```{r}
+roc(CustomerRetention_Testing$Status_new, Predictions_Probabilities, plot=TRUE, print.auc=TRUE)
+```
+#Answer 2.2
+#combination of variables status and monthlycharges
+
+```{r}
+# Store the Logistic Regression model in LogisticModel
+LogisticModel.training <- glm(Status_new ~ MonthlyCharges , data = CustomerRetention_Training, family = binomial)
+summary(LogisticModel.training)
+# To access only the coefficients, error estiamtes, z values and the p-values
+summary(LogisticModel.training)$coef
+```
+
+# To access only the coefficients, error estiamtes, z values and the p-values
+```{r}
+summary(LogisticModel.training)$coef
+```
+
+
+```{r}
+# Accessing just the coefficients from the model object
+coef(LogisticModel.training)
+```
+
+
+```{r}
+# To access just the p-values of the coefficients
+summary(LogisticModel.training)$coef[,3]
+```
+
+
+```{r}
+Predictions_Probabilities <- predict(LogisticModel.training, type = "response", newdata=CustomerRetention_Testing)
+```
+
+
+```{r}
+Predictions_Probabilities[1:20]
+```
+
+```{r}
+# Create a vector of prediction classes based on the value of the prediction probability
+Prediction_Classes <- ifelse(Predictions_Probabilities > 0.5, "Left", "Current")
+table(Prediction_Classes, CustomerRetention_Testing$Status_new)
+```
+
+
+#plot the ROC curve
+```{r}
+roc(CustomerRetention_Testing$Status_new, Predictions_Probabilities, plot=TRUE, print.auc=TRUE)
+```
+
+# Compute the prediction accuracy on the test data(in percent)
+```{r}
+(726+0)/(726+272+0+1)*100
+```
+#Answer 2.2
+# trying with combination of variables status and SeniorCitizen
+
+```{r}
+sen.LogisticModel.training <- glm(Status_new ~ SeniorCitizen , data = CustomerRetention_Training, family = binomial)
+summary(sen.LogisticModel.training)
+```
+
+
+```{r}
+summary(sen.LogisticModel.training)$coef
+```
+
+
+```{r}
+# To access just the p-values of the coefficients
+summary(sen.LogisticModel.training)$coef[,3]
+```
+
+
+```{r}
+sen.Predictions_Probabilities <- predict(sen.LogisticModel.training, type = "response" , newdata = CustomerRetention_Testing)
+```
+
+
+```{r}
+sen.Predictions_Probabilities[1:20]
+```
+
+
+```{r}
+# Create a vector of prediction classes based on the value of the prediction probability
+sen_Prediction_Classes <- ifelse(sen.Predictions_Probabilities > 0.3, "Left", "Current")
+table(sen_Prediction_Classes, CustomerRetention_Testing$Status_new)
+```
+
+# Compute the prediction accuracy on the training data(in percent)
+```{r}
+(4416+0)/(4416+1584+0+0)*100
+```
+# plot the ROC curve
+
+```{r}
+roc(CustomerRetention_Testing$Status_new, sen.Predictions_Probabilities, plot=TRUE, print.auc=TRUE)
+```
+
+# trying with combination of variables status and totalcharges
+
+```{r}
+totalcharges.LogisticModel.training <- glm(Status_new ~ TotalCharges , data = CustomerRetention_Training, family = binomial)
+summary(totalcharges.LogisticModel.training)
+summary(totalcharges.LogisticModel.training)$coef
+```
+
+
+```{r}
+totalcharges.Predictions_Probabilities <- predict(totalcharges.LogisticModel.training, newdata = CustomerRetention_Testing, type = "response")
+```
+
+
+```{r}
+totalcharges.Predictions_Probabilities[1:20]
+```
+
+
+```{r}
+# Create a vector of prediction classes based on the value of the prediction probability
+Prediction_Classes <- ifelse(totalcharges.Predictions_Probabilities > 0.3, "Left", "Current")
+table(Prediction_Classes, CustomerRetention_Testing$Status_new)
+```
+
+# Compute the prediction accuracy on the training data(in percent)
+```{r}
+(4416+0)/(4416+1584+0+0)*100
+```
+# plot the ROC curve
+
+```{r}
+roc(CustomerRetention_Testing$Status_new, totalcharges.Predictions_Probabilities, plot=TRUE, print.auc=TRUE)
+```
+# trying with combination of variables status and Gender
+
+```{r}
+Gender.LogisticModel.training <- glm(Status_new ~ Gender , data = CustomerRetention_Training, family = binomial)
+summary(Gender.LogisticModel.training)
+summary(Gender.LogisticModel.training)$coef
+```
+
+
+```{r}
+Gender.Predictions_Probabilities <- predict(Gender.LogisticModel.training, newdata = CustomerRetention_Testing, type = "response")
+```
+
+
+```{r}
+Gender.Predictions_Probabilities[1:20]
+```
+
+
+```{r}
+# Create a vector of prediction classes based on the value of the prediction probability
+Prediction_Classes <- ifelse(Gender.Predictions_Probabilities > 0.3, "Left", "Current")
+table(Prediction_Classes, CustomerRetention_Testing$Status_new)
+```
+
+
+# Compute the prediction accuracy on the training data(in percent)
+```{r}
+(4416+0)/(4416+1584+0+0)*100
+```
+# plot the ROC curve
+
+```{r}
+roc(CustomerRetention_Testing$Status_new, Gender.Predictions_Probabilities, plot=TRUE, print.auc=TRUE)
+```
+
+
+# trying with combination of variables status and Partner
+
+```{r}
+Partner.LogisticModel.training <- glm(Status_new ~ Partner , data = CustomerRetention_Training, family = binomial)
+summary(Partner.LogisticModel.training)
+summary(Partner.LogisticModel.training)$coef
+```
+
+
+```{r}
+Partner.Predictions_Probabilities <- predict(Partner.LogisticModel.training, newdata = CustomerRetention_Testing, type = "response")
+```
+
+
+```{r}
+Partner.Predictions_Probabilities[1:20]
+```
+
+
+```{r}
+# Create a vector of prediction classes based on the value of the prediction probability
+Prediction_Classes <- ifelse(Partner.Predictions_Probabilities > 0.3, "Left", "Current")
+table(Prediction_Classes, CustomerRetention_Testing$Status_new)
+```
+
+
+# Compute the prediction accuracy on the training data(in percent)
+```{r}
+(4416+0)/(4416+1584+0+0)*100
+```
+# plot the ROC curve
+
+```{r}
+roc(CustomerRetention_Testing$Status_new, Partner.Predictions_Probabilities, plot=TRUE, print.auc=TRUE)
+```
+
+# trying with combination of variables status and InternetServices
+```{r}
+InternetService.LogisticModel.training <- glm(Status_new ~ InternetService , data = CustomerRetention_Training, family = binomial)
+summary(InternetService.LogisticModel.training)
+summary(InternetService.LogisticModel.training)$coef
+```
+
+
+```{r}
+InternetService.Predictions_Probabilities <- predict(InternetService.LogisticModel.training, newdata = CustomerRetention_Testing, type = "response")
+```
+
+
+```{r}
+InternetService.Predictions_Probabilities[1:20]
+```
+
+
+```{r}
+# Create a vector of prediction classes based on the value of the prediction probability
+Prediction_Classes <- ifelse(InternetService.Predictions_Probabilities > 0.3, "Left", "Current")
+table(Prediction_Classes, CustomerRetention_Testing$Status_new)
+```
+
+
+# Compute the prediction accuracy on the training data(in percent)
+```{r}
+(470+197)/(470+75+257+197)*100
+```
+# plot the ROC curve
+
+```{r}
+roc(CustomerRetention_Testing$Status_new, InternetService.Predictions_Probabilities, plot=TRUE, print.auc=TRUE)
+```
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
